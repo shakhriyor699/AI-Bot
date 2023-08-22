@@ -1,0 +1,18 @@
+.container {
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 15px;
+
+  & .title {
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 55px;
+  }
+
+  & .subtitle {
+    color: #FFFFFF;
+    font-size: 18px;
+    margin-bottom: 26px;
+  }
+}
