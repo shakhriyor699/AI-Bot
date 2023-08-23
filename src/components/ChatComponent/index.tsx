@@ -21,8 +21,7 @@ const ChatComponent: React.FC = () => {
   const [botMessages, setBotMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
-  console.log(botMessages);
-
+  const [newMessage, setNewMessage] = useState<Message[]>([]);
 
   async function sendMessage(message: string) {
     const response = await fetch('http://185.46.8.130/api/v1/chat/send-message', {
@@ -69,33 +68,34 @@ const ChatComponent: React.FC = () => {
             chunks.forEach((chunk) => {
               try {
                 const parsedChunk = JSON.parse(chunk);
+
+
                 responseArray.push(parsedChunk);
               } catch (error) {
                 console.error(`Error parsing JSON: ${chunk}`, error);
               }
             });
           }
-
-
-
+          let newText = ''
           try {
             responseArray.forEach(async (response) => {
               const { status, value: chunkValue } = response
+
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               if (status === "content" && chunkValue !== null) {
-                // await new Promise(resolve => setTimeout(resolve, 100));
-                const botMessage: Message = { id: Date.now(), sender: 'Bot', text: chunkValue };
-                setBotMessages(prevBotMessages => [...prevBotMessages, botMessage]);
+                newText += chunkValue
+                const botMessage: Message = { id: Date.now(), sender: 'Bot', text: newText };
 
-
+                setBotMessages(prevBotMessages => [...prevBotMessages.slice(0, -1), botMessage]);
+                setNewMessage([...newMessage, botMessage]);
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 setIsBotTyping(false);
               }
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               if (status === 'done') {
                 setIsBotTyping(false);
-                // setBotMessages([])
               }
             })
           } catch (error) {
@@ -113,6 +113,7 @@ const ChatComponent: React.FC = () => {
     if (inputValue !== '') {
       const userMessage: Message = { id: Date.now(), sender: 'User', text: inputValue };
       setMessages(prevMessages => [...prevMessages, userMessage]);
+      
 
       try {
         setIsBotTyping(true);
@@ -138,20 +139,19 @@ const ChatComponent: React.FC = () => {
             </div>
           </div>
         ))}
-        {botMessages.length > 0 && (
+        {newMessage.length > 0 && newMessage.map(msg => (
           <div className={styles.messageContainer}>
             <div className={styles.avatar}>
               <img src={botAvatar} alt='Avatar' />
             </div>
             <div className={`${styles.message} ${styles.botMessage}`}>
               <div className={styles.messageText}>
-                {botMessages.map((botMessage) => (
-                  <span>{botMessage.text}</span>
-                ))}
+                <span>{msg.text}</span>
               </div>
             </div>
           </div>
-        )}
+        ))
+        }
         {isBotTyping && (
           <div className={`${styles.message} ${styles.botMessage}`}>
             <div className={styles.avatar}>
@@ -171,7 +171,7 @@ const ChatComponent: React.FC = () => {
           type="text"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)} />
-      <button type="button" onClick={handleSendMessage}><img src={sendIcon} alt="" /></button>
+        <button type="button" onClick={handleSendMessage}><img src={sendIcon} alt="" /></button>
       </div>
     </>
   )
